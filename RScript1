@@ -1,12 +1,6 @@
 #05.08.2022
 #R Script
 
-
-#Arbeitsumfeld setzen
-getwd()
-setwd("/Users/maike/Desktop/Uni/semester 6/Praxismodul/Statistik")
-getwd()
-
 #Data input
 Tabelle_noShoot <- read.csv2("Traits_vegetative.csv")
 Tabelle_Shoot <- read.csv2("Traits_Spiekeroog.csv")
