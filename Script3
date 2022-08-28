@@ -1,0 +1,197 @@
+#29.08.2022
+
+
+#set working directory
+getwd()
+setwd("")
+getwd()
+
+#Data input
+Tabelle_noShoot <- read.csv2("Traits_vegetative.csv")
+Tabelle_Shoot <- read.csv2("Traits_Spiekeroog.csv")
+Tabelle_Shoot_for_corr <- read.csv2("Traits_Spiekeroog_for_corr.csv") #without total length of plants with no mainshoot
+
+#convert DMS coordinates to decimal
+library("measurements")
+library(tidyr); library(dplyr)
+
+Tabelle_noShoot$latitude_GMS = gsub(';', ' ', Tabelle_noShoot$latitude_GMS)
+Tabelle_noShoot$latitude_GMS = measurements::conv_unit(Tabelle_noShoot$latitude_GMS, from = 'deg_min_sec', to = 'dec_deg')
+
+Tabelle_noShoot$longitude_GMS = gsub(';', ' ', Tabelle_noShoot$longitude_GMS)
+Tabelle_noShoot$longitude_GMS = gsub('°', ' ', Tabelle_noShoot$longitude_GMS)
+Tabelle_noShoot$longitude_GMS = gsub("'", ' ', Tabelle_noShoot$longitude_GMS)
+Tabelle_noShoot$longitude_GMS = measurements::conv_unit(Tabelle_noShoot$longitude_GMS, from = 'deg_min_sec', to = 'dec_deg')
+
+Tabelle_noShoot$longitude_GMS=as.numeric(Tabelle_noShoot$longitude_GMS)
+Tabelle_noShoot$latitude_GMS=as.numeric(Tabelle_noShoot$latitude_GMS)
+
+Tabelle_noShoot$longitude_GMS[Tabelle_noShoot$longitude_GMS == 0] <- NA
+Tabelle_noShoot$latitude_GMS[Tabelle_noShoot$latitude_GMS == 0] <- NA
+
+
+#Median, mean, variance, standard deviation
+#no shoot
+median_noShoot <- round(as.matrix(apply(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)],2,median,na.rm=TRUE)),digits=2)
+mean_noShoot <- round(as.matrix(apply(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)],2,mean,na.rm=TRUE)),digits=2)
+var_noShoot <- round(as.matrix(apply(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)],2,var,na.rm=TRUE)),digits=2)
+sd_noShoot <- round(as.matrix(apply(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)],2,sd,na.rm=TRUE)),digits=2)
+values_noShoot <- cbind(median_noShoot,mean_noShoot,var_noShoot,sd_noShoot)
+colnames(values_noShoot)=c("median","mean","variance","standard deviation")
+#shoot
+median_Shoot <- round(as.matrix(apply(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)],2,median,na.rm=TRUE)),digits=2)
+mean_Shoot <- round(as.matrix(apply(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)],2,mean,na.rm=TRUE)),digits=2)
+var_Shoot <- round(as.matrix(apply(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)],2,var,na.rm=TRUE)),digits=2)
+sd_Shoot <- round(as.matrix(apply(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)],2,sd,na.rm=TRUE)),digits=2)
+values_Shoot <- cbind(median_Shoot,mean_Shoot,var_Shoot,sd_Shoot)
+colnames(values_Shoot)=c("median","mean","variance","standard deviation")
+
+#correlations and significance
+library("dplyr")
+library(tidyverse)
+library("ggcorrplot")
+library("RColorBrewer")
+
+
+#pearson
+cor_mat_Tabelle_noShoot <- round(cor(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)], use="complete.obs"),digits=2)
+corrp.mat_noShoot <- round(cor_pmat(cor_mat_Tabelle_noShoot),digits=2)
+ggcorrplot(cor_mat_Tabelle_noShoot, hc.order =TRUE, type ="lower", 
+           p.mat = corrp.mat_noShoot,sig.level = 0.05, col=brewer.pal(3, "YlGnBu"),title="Correlations and significance", lab=TRUE, lab_size = 2,pch.cex=5)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+ggcorrplot(cor_mat_Tabelle_noShoot, hc.order =TRUE, type ="lower", 
+           col=brewer.pal(3, "YlGnBu"),title="Correlations and significance", lab=TRUE, lab_size = 2,pch.cex=5)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+#Spearman
+cor_mat_Tabelle_noShoot_spearman <- round(cor(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)], use="complete.obs", method = "spearman"),digits=2)
+cor(Tabelle_noShoot$leaves_number, sapply(Tabelle_noShoot,is.numeric), use="complete.obs")
+#substitute some pearson for spearman to get correct correlation matrix
+cor_mat_Tabelle_noShoot[5,] <- cor_mat_Tabelle_noShoot_spearman[ 5,] #rosette leaves
+cor_mat_Tabelle_noShoot[ ,5] <- cor_mat_Tabelle_noShoot_spearman[ ,5] #rosette leaves
+#plot
+ggcorrplot(cor_mat_Tabelle_noShoot, hc.order =TRUE, type ="lower", 
+           p.mat = corrp.mat_noShoot,sig.level = 0.05, col=brewer.pal(3, "YlGnBu"),title="Correlations and significance", lab=TRUE, lab_size = 2,pch.cex=5)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+ggcorrplot(cor_mat_Tabelle_noShoot, hc.order =TRUE, type ="lower", 
+           col=brewer.pal(3, "YlGnBu"),title="Correlations and significance", lab=TRUE, lab_size = 2,pch.cex=5)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+
+#Shoot
+#pearson
+cor_mat_Tabelle_Shoot <- round(cor(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)], use="complete.obs"), digits=2)
+corrp.mat_Shoot <- round(cor_pmat(cor_mat_Tabelle_Shoot),digits=2)
+#spearman
+cor_mat_Tabelle_Shoot_spearman <- round(cor(Tabelle_Shoot_for_corr[sapply(Tabelle_Shoot_for_corr,is.numeric)], use="complete.obs",method="spearman"), digits=2)
+corrp.mat_Shoot <- round(cor_pmat(cor_mat_Tabelle_Shoot_spearman),digits=2)
+#substitute some pearson for spearman to get correct correlation matrix
+cor_mat_Tabelle_Shoot[ ,2] <- cor_mat_Tabelle_Shoot_spearman[ ,2] #rosette leaves
+cor_mat_Tabelle_Shoot[ 2,] <- cor_mat_Tabelle_Shoot_spearman[2 ,]
+cor_mat_Tabelle_Shoot[ ,10] <- cor_mat_Tabelle_Shoot_spearman[ ,10] #caulines
+cor_mat_Tabelle_Shoot[ 10,] <- cor_mat_Tabelle_Shoot_spearman[10 ,]
+cor_mat_Tabelle_Shoot[ 11,] <- cor_mat_Tabelle_Shoot_spearman[11 ,] #flowers
+cor_mat_Tabelle_Shoot[ ,11] <- cor_mat_Tabelle_Shoot_spearman[ ,11]
+cor_mat_Tabelle_Shoot[ 12,] <- cor_mat_Tabelle_Shoot_spearman[12 ,] #sliliques
+cor_mat_Tabelle_Shoot[ ,12] <- cor_mat_Tabelle_Shoot_spearman[,12]
+cor_mat_Tabelle_Shoot[ 13,] <- cor_mat_Tabelle_Shoot_spearman[13 ,] #reprod. units
+cor_mat_Tabelle_Shoot[ ,13] <- cor_mat_Tabelle_Shoot_spearman[,13]
+cor_mat_Tabelle_Shoot[ 16,] <- cor_mat_Tabelle_Shoot_spearman[16 ,] #sideshoots
+cor_mat_Tabelle_Shoot[ ,16] <- cor_mat_Tabelle_Shoot_spearman[ ,16]
+cor_mat_Tabelle_Shoot[ 17,] <- cor_mat_Tabelle_Shoot_spearman[17 ,] #sidebranches
+cor_mat_Tabelle_Shoot[ ,17] <- cor_mat_Tabelle_Shoot_spearman[ ,17]
+#plot
+ggcorrplot(cor_mat_Tabelle_Shoot, hc.order =TRUE, type ="lower", 
+           p.mat = corrp.mat_Shoot, title="Correlations and significance", lab=TRUE, lab_size = 1,pch.cex=2)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+ggcorrplot(cor_mat_Tabelle_Shoot, hc.order =TRUE, type ="lower", 
+           title="Correlations and significance", lab=TRUE, sig.level=0.1, lab_size = 1,pch.cex=2)+ theme(axis.text.x = element_text(size=5),axis.text.y = element_text(size=5))
+
+
+# Correlations with respect to location and mainshoot y/n
+#location (shoot)
+df_shoot1 <- data.frame(Tabelle_Shoot_for_corr)
+df_shoot1$location <- as.factor(df_shoot1$location)
+#trial <- split(df_shoot, df_shoot$location)
+corr_shoot_location <- lapply(split(df_shoot1[,c(4:9,11:15,19,20)], df_shoot1$location), cor, use = 'complete.obs')
+corr_shoot_location$Wechloy_Hof
+#mainshoot (shoot)
+df_shoot2 <- data.frame(Tabelle_Shoot_for_corr)
+df_shoot2$mainshoot<- as.factor(df_shoot2$mainshoot)
+corr_shoot_mainshoot <- lapply(split(df_shoot2[,c(3:15,17,19,20)], df_shoot2$mainshoot), cor, use = 'complete.obs')
+corr_shoot_mainshoot$y
+
+#eaten leaves (no shoot)
+df_shoot3 <- data.frame(Tabelle_noShoot)
+df_shoot3$eaten_leaves <- as.factor(df_shoot3$eaten_leaves)
+corr_shoot_eaten_leaves <- lapply(split(df_shoot3[,c(1:5,7:11)], df_shoot3$eaten_leaves), cor, use = 'complete.obs')
+corr_shoot_eaten_leaves$y
+
+
+#create different plots and wilcox testing
+library("ggplot2")
+library("GGally")
+#no shoot
+ggpairs(Tabelle_noShoot[sapply(Tabelle_noShoot,is.numeric)],lower = list(continuous = wrap("points", size=0.1) ))+theme_grey(base_size = 3)
+#eaten_leaves
+ggplot(Tabelle_noShoot,aes(leaves_number,eaten_leaves))+geom_boxplot()
+ggplot(Tabelle_noShoot,aes(leaves_number,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(leaves_number~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(root_length_cm,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(root_length_cm~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(length_longest_leaf_cm,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(length_longest_leaf_cm~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(petiole_longest_leaf_cm,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(petiole_longest_leaf_cm~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(width_longest_leaf_cm,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(width_longest_leaf_cm~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(petiole.length.ratio,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(petiole.length.ratio~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+ggplot(Tabelle_noShoot,aes(length.width.ratio,eaten_leaves))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(length.width.ratio~eaten_leaves, data=Tabelle_noShoot,subset=eaten_leaves%in%c("y","n"))
+
+
+#shoot
+ggpairs(Tabelle_Shoot[sapply(Tabelle_Shoot,is.numeric)],lower = list(continuous = wrap("points", size=0.01) ),upper = list(continuous = wrap("cor", size=1)))+theme(axis.text.x = element_text(size=2),axis.text.y = element_text(size=2))+theme_grey(base_size = 3)
+#location
+ggplot(Tabelle_Shoot,aes(reproductive_units,location))+geom_boxplot()
+ggplot(Tabelle_Shoot,aes(reproductive_units,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(leaf_number,location))+geom_violin(draw_quantiles = c( 0.5),fill="7")
+ggplot(Tabelle_Shoot,aes(petiole_cm, location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(leaf_length_cm,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(leaf_width_cm,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(petiole.total_length.ratio,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(length.width.ratio,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(internodium_cm,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(stem_mm,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(cauline_leaves,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(plant_length_cm,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(plant_length.root_length.ratio,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(sideshoots,location))+geom_violin(draw_quantiles = c( 0.5))
+ggplot(Tabelle_Shoot,aes(sidebranches,location))+geom_violin(draw_quantiles = c( 0.5))
+
+#mainshoot yes/no
+ggplot(Tabelle_Shoot,aes(reproductive_units,mainshoot))+geom_boxplot()
+ggplot(Tabelle_Shoot,aes(reproductive_units,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(reproductive_units~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(leaf_number,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(leaf_number~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(petiole_cm, mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(petiole_cm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(leaf_length_cm,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(leaf_length_cm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(leaf_width_cm,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(leaf_width_cm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(petiole.total_length.ratio,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(petiole.total_length.ratio~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(length.width.ratio,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(length.width.ratio~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(internodium_cm,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(internodium_cm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(stem_mm,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(stem_mm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(cauline_leaves,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(cauline_leaves~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(plant_length_cm,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(plant_length_cm~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(plant_length.root_length.ratio,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(plant_length.root_length.ratio~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(sideshoots,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(sideshoots~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+ggplot(Tabelle_Shoot,aes(sidebranches,mainshoot))+geom_violin(draw_quantiles = c( 0.5))
+wilcox.test(sidebranches~mainshoot, data=Tabelle_Shoot,subset=mainshoot%in%c("y","n"))
+
+
