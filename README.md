@@ -1,4 +1,4 @@
-# Bachelor-thesis---A.-thaliana
+# Bacheor Thesis - statistical Data Analysis and Visulization
 This is a R script for the statistical analysis of 2 datasets ("Shoot" for older plants with a shoot,"noShoot" for younger plants without a shoot).
 Each of them contains measurements for different characteristics of the plant Arabidopsis thaliana L. or location data.
-The goal is to see if there are interesting correlations between any of the variables and to plot them nicely. 
+The goal is to see if there are interesting correlations between any of the variables and to plot them nicely. In order to keep research details secret, there will be no more details provided.
